@@ -1,6 +1,6 @@
 import "../pages/index.css";
 import { initialCards } from "./cards.js";
-import { createCard, deleteCard, likeCard, handleImageClick } from "../components/card.js";
+import { createCard, deleteCard, likeCard } from "../components/card.js";
 import { openModal, closeModal, addListenerPopup } from "../components/modal.js";
 
 //DOM узлы
@@ -13,18 +13,20 @@ initialCards.forEach((cardData) => {
 });
 
 const popupTypeEdit = document.querySelector(".popup_type_edit");
-const popupTypeNewCard = document.querySelector(".popup_type_new-card"); //добавляем два попата
+const popupTypeNewCard = document.querySelector(".popup_type_new-card");
+const popupTypeImage = document.querySelector(".popup_type_image");
 
 const buttonEditProfile = document.querySelector(".profile__edit-button");
-const buttonAddCard = document.querySelector(".profile__add-button"); //добавляем две кнопки для открытия попапов
+const buttonAddCard = document.querySelector(".profile__add-button");
+const popupImage = document.querySelector(".popup__image");
 
 const profileTitle = document.querySelector(".profile__title");
 const profileJob = document.querySelector(".profile__description");
+const popupCaption = document.querySelector(".popup__caption");
 
 //открытие окна для редактирования редактирования
 buttonEditProfile.addEventListener("click", () => {
   openModal(popupTypeEdit);
-  addListenerPopup(popupTypeEdit);
   nameInput.value = profileTitle.textContent;
   jobInput.value = profileJob.textContent;
 });
@@ -32,8 +34,17 @@ buttonEditProfile.addEventListener("click", () => {
 //открытие окна для добавления карточки
 buttonAddCard.addEventListener("click", () => {
   openModal(popupTypeNewCard)
-  addListenerPopup(popupTypeNewCard);
 });
+
+//функция обработки карточки с фоткой при клике
+function handleImageClick(cardData) {
+  openModal(popupTypeImage);
+  popupImage.src = cardData.link;
+  popupImage.alt = cardData.name;
+  popupCaption.textContent = cardData.name;
+}
+
+[popupTypeEdit, popupTypeNewCard, popupTypeImage].forEach(addListenerPopup);
 
 //редактирование имени и информации о себе
 const profileForm = document.forms["edit-profile"];

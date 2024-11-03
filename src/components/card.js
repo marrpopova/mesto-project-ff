@@ -1,8 +1,3 @@
-import {openModal, addListenerPopup} from './modal.js'
-const popupTypeImage = document.querySelector(".popup_type_image");
-const popupImage = document.querySelector(".popup__image");
-const popupCaption = document.querySelector(".popup__caption");
-
 //Темплейт карточки
 const cardTemplate = document.querySelector("#card-template").content;
 
@@ -24,19 +19,10 @@ export function createCard(cardData, deleteCard, likeCard, handleImageClick) {
   });
 
   cardImage.addEventListener("click", () => {
-    handleImageClick(popupTypeImage, cardData)
+    handleImageClick(cardData);
   });
 
   return cardElement;
-}
-
-//функция открытия карточки с фоткой при клике
-export function handleImageClick(popup, cardData) {
-  openModal(popup);
-  addListenerPopup(popup);
-  popupImage.src = cardData.link;
-  popupImage.alt = cardData.name;
-  popupCaption.textContent = cardData.name;
 }
 
 //Функция удаления карточки
