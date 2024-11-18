@@ -1,7 +1,7 @@
 import "../pages/index.css";
 import { createCard } from "../components/card.js";
 import { openModal, closeModal, addListenerPopup } from "../components/modal.js";
-import { enableValidation, obj } from "../components/validation.js"
+import { enableValidation, clearValidation } from "../components/validation.js"
 import { getAllCards, getUserInfo, editUserInfo, createNewCard, removeCard, changeAvatar, likeCardDev, likeCardDevDel } from "./api.js";
 
 //DOM узлы
@@ -34,7 +34,14 @@ const linkInput = document.querySelector(".popup__input_type_url");
 const profileImage = document.querySelector('.profile__image');
 const popupTypeChangeAvatar = document.querySelector('.popup__avatar-update');
 
-let buttonIsLoading
+const obj = {
+  formSelector: '.popup__form',
+  inputSelector: '.popup__input',
+  submitButtonSelector: '.popup__button',
+  inactiveButtonClass: 'popup__button_disabled',
+  inputErrorClass: 'popup__input_type_error',
+  errorClass: 'popup__error_visible'
+};
 let cardForDelete = {}
 
 const onDeleteCard = (cardId, cardElement) => {
@@ -60,20 +67,13 @@ const handleDeleteCardSubmit = (evt) => {
 deleteCardForm.addEventListener("submit", handleDeleteCardSubmit);
 
 const likeCard = (cardData, counter, item) => {
-  item.classList.toggle("card__like-button_is-active");
-  if (item.classList.contains("card__like-button_is-active")) {
-    likeCardDev(cardData._id)
-    .then((d) => {
-      counter.textContent = d.likes.length;
-    })
-    .catch((err) => {alert(err)})
-  } else {
-    likeCardDevDel(cardData._id)
-    .then((d) => {
-      counter.textContent = d.likes.length;
-    })
-    .catch((err) => {alert(err)})
-  }
+  const likeMethod = item.classList.contains("card__like-button_is-active") ? likeCardDevDel : likeCardDev;
+  likeMethod(cardData._id) 
+  .then((d) => {
+    item.classList.toggle("card__like-button_is-active");
+    counter.textContent = d.likes.length; 
+  }) 
+  .catch((err) => {alert(err)})
 }
 
 //функция обработки карточки с фоткой при клике
@@ -84,6 +84,7 @@ const handleImageClick = (cardData) => {
   popupCaption.textContent = cardData.name;
 }
 
+let userId
 Promise.all([
   getUserInfo(),
   getAllCards()
@@ -92,9 +93,10 @@ Promise.all([
   profileTitle.textContent = userInfo.name;
   profileJob.textContent = userInfo.about;
   profileImage.style.backgroundImage = `url(${userInfo.avatar})`;
+  userId = userInfo._id;
 
   allCards.forEach((cardData) => {
-    const card = createCard(cardData, onDeleteCard, likeCard, handleImageClick, userInfo._id);
+    const card = createCard(cardData, onDeleteCard, likeCard, handleImageClick, userId);
     placesList.append(card);
   })
 })
@@ -103,31 +105,30 @@ Promise.all([
 //открытие окна редактирования аватарки профиля
 profileImage.addEventListener('click' , () => {
   openModal(popupTypeChangeAvatar)
+  clearValidation (avatarUpdateForm, obj)
 })
 //открытие окна для редактирования профиля
 buttonEditProfile.addEventListener("click", () => {
   openModal(popupTypeEdit);
+  clearValidation (profileForm, obj)
   nameInput.value = profileTitle.textContent;
   jobInput.value = profileJob.textContent;
 });
 //открытие окна для добавления карточки
 buttonAddCard.addEventListener("click", () => {
   openModal(popupTypeNewCard)
+  clearValidation(cardForm, obj)
 });
 
 //улучшение UX
 const renderLoading = (isLoading, buttonIsLoading) => {
-  if (isLoading) {
-    buttonIsLoading.textContent = 'Сохранение...'
-  } else {
-    buttonIsLoading.textContent = 'Сохраненo'
-  }
+  buttonIsLoading.textContent = isLoading ? 'Сохранение...' : 'Сохранить';
 }
 
 //сабмит обновления аватарки
 const handleUpdateAvatarFormSubmit = (evt) => {
   evt.preventDefault();
-  buttonIsLoading = evt.target.querySelector('.popup__button')
+  const buttonIsLoading = evt.target.querySelector('.popup__button')
   renderLoading(true, buttonIsLoading)
 
   changeAvatar (linkAvatarInput.value)
@@ -145,7 +146,7 @@ avatarUpdateForm.addEventListener("submit", handleUpdateAvatarFormSubmit);
 //редактирование имени и информации о себе
 const handleProfileFormSubmit = (evt) => {
   evt.preventDefault();
-  buttonIsLoading = evt.target.querySelector('.popup__button')
+  const buttonIsLoading = evt.target.querySelector('.popup__button')
   renderLoading(true, buttonIsLoading)
 
   editUserInfo(nameInput.value, jobInput.value)
@@ -164,18 +165,16 @@ profileForm.addEventListener("submit", handleProfileFormSubmit);
 //Добавление карточки
 const handleAddCardFormSubmit = (evt) => {
   evt.preventDefault();
-  buttonIsLoading = evt.target.querySelector('.popup__button')
+  const buttonIsLoading = evt.target.querySelector('.popup__button')
   renderLoading(true, buttonIsLoading)
   const newObjectCard = {
     name: nameMesto.value,
     link: linkInput.value,
   };
-  Promise.all([
-    getUserInfo(),
-    createNewCard(newObjectCard)
-  ])
-  .then(([userInfo, newObjectCard]) => {
-    placesList.prepend(createCard(newObjectCard, onDeleteCard, likeCard, handleImageClick, userInfo._id));
+  
+  createNewCard(newObjectCard)
+  .then((newObjectCard) => {
+    placesList.prepend(createCard(newObjectCard, onDeleteCard, likeCard, handleImageClick, userId));
     cardForm.reset();
     closeModal(popupTypeNewCard);
   })
